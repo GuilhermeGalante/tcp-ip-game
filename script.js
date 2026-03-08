@@ -1,4 +1,4 @@
-
+// Helper for Security (Mitigate DOM-based XSS)
 function escapeHTML(str) {
     return str.replace(/[&<>'"]/g, 
         tag => ({
@@ -10,20 +10,22 @@ function escapeHTML(str) {
         }[tag] || tag)
     );
 }
-
+
+// Helper para converter string em representação Hexadecimal (Bytes)
 function stringToHex(str) {
     return str.split('')
               .map(char => char.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase())
               .join(' ');
 }
-
+
+// Game State
 const state = {
     level: 1,
     message: '',
-    protocol: 'HTTP/HTTPS',
-    transportProto: 'TCP',
+    protocol: 'HTTP/HTTPS', // App layer
+    transportProto: 'TCP', // Transport layer (TCP or UDP)
     words: [],
-    segments: [],
+    segments: [], // { id, word, seq: null, srcIp: null, destIp: null, lost: false }
     arrivedPackets: [],
     srcIp: '192.168.1.10',
     destIp: '203.0.113.50',
@@ -31,7 +33,8 @@ const state = {
     packetLoss: 0,
     stats: { lost: 0, retransmitted: 0 }
 };
-
+
+// Web Audio API Helper (Synthetic Sounds)
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioCtx = new AudioContext();
 
@@ -70,11 +73,11 @@ const SoundFX = {
     },
     playExplosion: () => {
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        const bufferSize = audioCtx.sampleRate * 0.4;
+        const bufferSize = audioCtx.sampleRate * 0.4; // 300ms
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
+            data[i] = Math.random() * 2 - 1; // White noise
         }
         
         const noise = audioCtx.createBufferSource();
@@ -103,10 +106,10 @@ const SoundFX = {
         gain.connect(audioCtx.destination);
         
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
-        osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
-        osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.3);
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+        osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+        osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.3); // C6
         
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime + 0.3);
@@ -123,7 +126,6 @@ const SoundFX = {
         gain.connect(audioCtx.destination);
         
         osc.type = 'sine';
-       
         osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.05);
         
@@ -134,31 +136,33 @@ const SoundFX = {
         osc.stop(audioCtx.currentTime + 0.05);
     }
 };
-
+
+// DOM Elements
 const levelArea = document.getElementById('level-area');
 const infoPanel = document.getElementById('info-panel');
 const infoTitle = document.getElementById('info-title');
 const infoText = document.getElementById('info-text');
-
+
+// Didactic Instructions
 const instructions = {
     1: {
-        title: "Camada de Aplicação (A Origem)",
+        title: "Camada de Aplicação",
         text: "Tudo começa aqui. Protocolos como HTTP ou DNS geram os dados (o Payload) da sua mensagem. Curiosidade: Antes de 1983, a internet usava o protocolo antigo NCP, que não conectava redes diferentes. O TCP/IP nasceu para resolver isso e criar a internet moderna!\n\n👉 AÇÃO: Escolha um Protocolo de Aplicação, digite sua mensagem, e selecione o Protocolo de Transporte correto (TCP ou UDP)."
     },
     2: {
-        title: "Camada de Transporte (Segmentação e Portas)",
-        text: "A mensagem é muito grande! Aqui ocorre a 'Segmentação': o despachante (TCP) quebra os dados e os numera para garantir a ordem, ou o entregador rápido (UDP) apenas empacota sem controle. Também definimos a Porta Lógica (ex: 80, 443) de destino.\n\n👉 AÇÃO: Se escolheu TCP, clique nos segmentos para numerá-los. Se escolheu UDP, os pacotes vão sem controle de sequência (apenas avance).\n\nNota didática: Na vida real, o TCP divide os dados por limite de Bytes (MTU da rede), mas aqui usaremos as palavras da sua frase para facilitar a visualização."
+        title: "Camada de Transporte",
+        text: "A mensagem é muito grande! Aqui ocorre a 'Segmentação': o despachante (TCP) quebra os dados e os numera para garantir a ordem, ou o entregador rápido (UDP) apenas empacota sem controle. Também definimos a Porta Lógica (ex: 80, 443) de destino.\n\n👉 AÇÃO: Se escolheu TCP, clique nos segmentos para numerá-los. Se escolheu UDP, os pacotes vão sem controle de sequência (apenas avance).\n\nNota: Na vida real, o TCP divide os dados por limite de Bytes (MTU da rede), mas aqui usaremos as palavras da sua frase para facilitar a visualização."
     },
     3: {
         title: "Camada de Rede (Roteamento IP)",
         text: "Os segmentos agora viram 'Pacotes'. O IP atua como o sistema de correios: ele não liga para o que tem dentro da caixa, sua única função é colar o Endereço IP de Origem e de Destino para que os roteadores saibam o caminho.\n\n👉 AÇÃO: Confirme ou preencha os IPs de envio e recebimento e aperte o botão para carimbar."
     },
     4: {
-        title: "A Internet (A Viagem Caótica)",
+        title: "A Internet ",
         text: "Lançados na teia! Os roteadores decidem o melhor caminho a cada milissegundo.\n\n⚡ Se for TCP: Antes de enviar, ele faz o '3-Way Handshake' (SYN, SYN-ACK, ACK) — um aperto de mãos para garantir que o destino está online. Se perder pacotes na viagem, ele retransmite.\n\n⚡ Se for UDP: Ele ignora o aperto de mãos e dispara tudo cegamente. Se perder na rede, já era.\n\n👉 AÇÃO: Observe o tráfego e torça para chegarem!"
     },
     5: {
-        title: "Destino (O Buffer de Reconstrução)",
+        title: "Destino (Reconstrução)",
         text: "Os pacotes chegaram ao destino e caíram no Buffer. O TCP usa os números de sequência para reordenar as peças do quebra-cabeças com perfeição. O UDP joga as peças na mesa na exata ordem de chegada, com os buracos dos pacotes perdidos.\n\n👉 AÇÃO: Clique no botão abaixo para processar o buffer e ver como a mensagem original foi entregue."
     }
 };
@@ -195,7 +199,8 @@ function loadLevel(level) {
         case 5: renderLevel5(); break;
     }
 }
-
+
+// --- LEVEL 1: APP START ---
 function renderLevel1() {
     const div = document.createElement('div');
     div.className = 'app-level';
@@ -240,7 +245,11 @@ function renderLevel1() {
     const transProtos = document.querySelectorAll('.transport-btn');
     const errorBanner = document.getElementById('validationError');
 
-   
+    // UX Tutorial: Faz o input pulsar no início
+    if(state.message.trim().length === 0) {
+        input.classList.add('hint-pulse');
+    }
+
     state.protocol = appSelect.value;
 
     appSelect.addEventListener('change', (e) => {
@@ -249,20 +258,25 @@ function renderLevel1() {
     });
 
     input.addEventListener('input', (e) => {
+        input.classList.remove('hint-pulse'); // Remove pulse quando começa a digitar
         state.message = e.target.value;
         const words = state.message.trim().split(/\s+/).filter(w => w.length > 0);
+        
         if (words.length > 10) {
             nextBtn.disabled = true;
+            nextBtn.classList.remove('hint-pulse');
             errorBanner.innerHTML = "⚠️ Carga muito alta: Para não sobrecarregar a simulação visual, use no máximo 10 palavras.";
             errorBanner.style.display = 'flex';
         } else {
             nextBtn.disabled = state.message.trim().length === 0;
             errorBanner.style.display = 'none';
+            // Passa o pulse para o botão se estiver validado
+            if(!nextBtn.disabled) nextBtn.classList.add('hint-pulse');
+            else nextBtn.classList.remove('hint-pulse');
         }
     });
 
     input.addEventListener('keydown', (e) => {
-       
         if (e.key.length === 1 || e.key === 'Backspace') {
             SoundFX.playTick();
         }
@@ -272,7 +286,10 @@ function renderLevel1() {
         }
     });
 
-    if(state.message.length > 0) nextBtn.disabled = false;
+    if(state.message.length > 0) {
+        nextBtn.disabled = false;
+        nextBtn.classList.add('hint-pulse');
+    }
 
     transProtos.forEach(p => p.addEventListener('click', (e) => {
         transProtos.forEach(btn => btn.classList.remove('selected'));
@@ -281,9 +298,8 @@ function renderLevel1() {
         errorBanner.style.display = 'none';
     }));
 
-   
     const mensagensErro = {
-        'HTTP/HTTPS': 'A web clássica requer a garantia do TCP. (Nota avançada: O moderno protocolo HTTP/3 contorna isso usando UDP através do QUIC para maior velocidade). Mude para <b>TCP</b>.',
+        'HTTP/HTTPS': 'A web clássica requer a garantia do TCP. (Nota: O moderno protocolo HTTP/3 contorna isso usando UDP através do QUIC para maior velocidade). Mude para <b>TCP</b>.',
         
         'SMTP': 'O SMTP envia e-mails. Você não quer que seu e-mail chegue faltando palavras! O UDP não garante a entrega. Mude para <b>TCP</b>.',
         
@@ -291,7 +307,7 @@ function renderLevel1() {
         
         'FTP': 'Arquivos não toleram perda de dados. (Curiosidade: Existe o TFTP, que usa UDP para arquivos pequenos em redes locais, mas o FTP clássico exige garantia). Mude para <b>TCP</b>.',
         
-        'SSH/Telnet': 'No terminal remoto, cada comando deve chegar na ordem exata. (Nota avançada: Túneis modernos de acesso remoto, como o WireGuard, preferem UDP, mas o SSH é estritamente TCP). Mude para <b>TCP</b>.',
+        'SSH/Telnet': 'No terminal remoto, cada comando deve chegar na ordem exata. (Nota: Túneis modernos de acesso remoto, como o WireGuard, preferem UDP, mas o SSH é estritamente TCP). Mude para <b>TCP</b>.',
         
         'SNMP': 'O SNMP envia alertas curtos de monitoramento. (Curiosidade: A documentação permite SNMP via TCP, mas na prática 99% usa UDP para não gerar tráfego excessivo em redes que estão falhando). Escolha <b>UDP</b>.'
     };
@@ -325,14 +341,12 @@ function renderLevel1() {
         if (errorMsg) {
             errorBanner.innerHTML = errorMsg;
             errorBanner.style.display = 'flex';
-           
             errorBanner.style.animation = 'none';
             errorBanner.offsetHeight; 
             errorBanner.style.animation = null; 
             return;
         }
 
-       
         state.words = state.message.trim().split(/\s+/).filter(w => w.length > 0);
         state.segments = state.words.map((w, i) => ({
             id: i,
@@ -345,7 +359,8 @@ function renderLevel1() {
         loadLevel(2);
     });
 }
-
+
+// --- LEVEL 2: TCP START ---
 function renderLevel2() {
     const isUDP = state.transportProto === 'UDP';
     const div = document.createElement('div');
@@ -372,20 +387,38 @@ function renderLevel2() {
     `;
     levelArea.appendChild(div);
 
+    // UX Tutorial: Se for TCP, avisa que o usuário precisa clicar no primeiro segmento
+    if (!isUDP && state.segments.length > 0) {
+        const firstSeg = document.getElementById('seg-0');
+        if (firstSeg) firstSeg.classList.add('hint-pulse');
+    }
+
+    // UX Tutorial: Se for UDP, o botão de avançar já nasce pronto e pulsando
+    if (isUDP) {
+        document.getElementById('nextBtn2').classList.add('hint-pulse');
+    }
+
     let currentSeq = 1;
 
     function stampSegment(segElement, seg, index) {
         if (isUDP) return;
         if (!segElement.classList.contains('stamped')) {
             SoundFX.playThump();
+            segElement.classList.remove('hint-pulse'); // Remove pulse do atual
+            
             segElement.classList.add('stamped');
             document.getElementById(`seq-text-${index}`).innerHTML = `Seq: ${currentSeq}`;
             seg.seq = currentSeq;
             currentSeq++;
 
+            // Passa o pulse para o próximo elemento
+            const nextSeg = document.getElementById(`seg-${index + 1}`);
+            if (nextSeg) nextSeg.classList.add('hint-pulse');
+
             if (currentSeq > state.segments.length) {
                 const nextBtn2 = document.getElementById('nextBtn2');
                 nextBtn2.style.display = 'inline-block';
+                nextBtn2.classList.add('hint-pulse'); // Pulse final no botão avançar
                 nextBtn2.focus();
             }
         }
@@ -411,10 +444,15 @@ function renderLevel2() {
                 seg.seq = null;
                 const segElement = document.getElementById(`seg-${i}`);
                 segElement.classList.remove('stamped');
+                segElement.classList.remove('hint-pulse');
                 document.getElementById(`seq-text-${i}`).innerHTML = `Seq: ?`;
             });
             document.getElementById('nextBtn2').style.display = 'none';
-            document.getElementById('seg-0').focus();
+            document.getElementById('nextBtn2').classList.remove('hint-pulse');
+            
+            const firstSeg = document.getElementById('seg-0');
+            if(firstSeg) firstSeg.classList.add('hint-pulse');
+            firstSeg.focus();
         });
     }
 
@@ -422,7 +460,8 @@ function renderLevel2() {
         loadLevel(3);
     });
 }
-
+
+// --- LEVEL 3: IP START ---
 function renderLevel3() {
     const div = document.createElement('div');
     div.className = 'ip-level';
@@ -457,6 +496,8 @@ function renderLevel3() {
     levelArea.appendChild(div);
 
     const applyIpBtn = document.getElementById('applyIpBtn');
+    applyIpBtn.classList.add('hint-pulse'); // UX Tutorial: Pulse no botão carimbar
+
     applyIpBtn.addEventListener('click', () => {
         SoundFX.playThump();
         const srcIpVal = document.getElementById('srcIpInput').value || '192.168.1.1';
@@ -482,6 +523,8 @@ function renderLevel3() {
             return;
         }
         
+        applyIpBtn.classList.remove('hint-pulse'); // Remove pulse ao passar
+
         const errBan = document.getElementById('ipValidationErr');
         if(errBan) errBan.style.display = 'none';
 
@@ -497,6 +540,7 @@ function renderLevel3() {
 
         const nextBtn3 = document.getElementById('nextBtn3');
         nextBtn3.style.display = 'block';
+        nextBtn3.classList.add('hint-pulse'); // UX Tutorial: Pulse no Lançar
         nextBtn3.focus();
     });
 
@@ -512,7 +556,8 @@ function renderLevel3() {
         loadLevel(4);
     });
 }
-
+
+// --- LEVEL 4: INTERNET START ---
 function renderLevel4() {
     state.latency = Math.floor(Math.random() * 131) + 20;
     state.packetLoss = Math.floor(Math.random() * 21) + 10;
@@ -527,7 +572,6 @@ function renderLevel4() {
     const internetNet = document.getElementById('internetNet');
     const handshakeStatus = document.getElementById('handshake-status');
     
-   
     const nodes = [];
     const width = levelArea.clientWidth;
     const height = levelArea.clientHeight || 400;
@@ -545,12 +589,9 @@ function renderLevel4() {
         return node;
     }
 
-   
     createNode(50, height/2, 'A', 'success');
-   
     createNode(width - 50, height/2, 'B', 'success');
 
-   
     const col1X = width * 0.33;
     const col2X = width * 0.66;
     createNode(col1X, height * 0.25, 'R1');
@@ -560,7 +601,6 @@ function renderLevel4() {
     createNode(col2X, height * 0.5, 'R5'); 
     createNode(col2X, height * 0.75, 'R6');
 
-   
     const edges = [
         [0, 2], [0, 3], [0, 4],
         [2, 5], [2, 6], [3, 5], [3, 6], [3, 7], [4, 6], [4, 7],
@@ -592,7 +632,6 @@ function renderLevel4() {
     let handledPacketsCount = 0;
     const transTime = Math.max(0.8, state.latency / 120);
 
-   
     function performHandshake(callback) {
         handshakeStatus.innerText = "TCP: Iniciando 3-Way Handshake...";
         
@@ -688,7 +727,6 @@ function renderLevel4() {
         }, 800);
     }
 
-   
     function startDataTransmission() {
         if (!isTCP) handshakeStatus.innerText = "UDP: Sem Handshake. Disparando dados!";
         
@@ -701,7 +739,6 @@ function renderLevel4() {
         });
     }
 
-   
     if (isTCP) {
         performHandshake(startDataTransmission);
     } else {
@@ -802,13 +839,13 @@ function renderLevel4() {
         }
     }
 }
-
+
+// --- LEVEL 5: DESTINATION START ---
 function renderLevel5() {
     const isUDP = state.transportProto === 'UDP';
     const div = document.createElement('div');
     div.className = 'dest-level';
     
-   
     let arrivedHtml = state.arrivedPackets.map(seg => `
         <div class="segment" id="dest-seg-${seg.id}" style="border-color: var(--secondary);">
             <div class="header-tcp">Seq: ${seg.seq !== null ? seg.seq : '⛔'}</div>
@@ -823,26 +860,25 @@ function renderLevel5() {
         <div class="assembly-area" id="receiverBuffer">
             ${state.arrivedPackets.length > 0 ? arrivedHtml : '<p style="color:var(--secondary)">Ops... Todos os pacotes foram perdidos na rede!</p>'}
         </div>
-        <button id="reconstructBtn" class="action-btn">${isUDP ? 'Forçar Leitura da Mensagem Bruta' : 'Mandar o TCP Reordenar!'}</button>
+        <button id="reconstructBtn" class="action-btn hint-pulse">${isUDP ? 'Forçar Leitura da Mensagem Bruta' : 'Mandar o TCP Reordenar!'}</button>
         <div class="final-message-box" id="finalMessageBox"></div>
     `;
     levelArea.appendChild(div);
 
-    document.getElementById('reconstructBtn').addEventListener('click', (e) => {
+    const reconstructBtn = document.getElementById('reconstructBtn');
+
+    reconstructBtn.addEventListener('click', (e) => {
         e.target.style.display = 'none';
+        e.target.classList.remove('hint-pulse'); // Remove pulse ao clicar
         
         const buffer = document.getElementById('receiverBuffer');
         buffer.innerHTML = '';
         
-       
         let parsedPackets;
         
         if (isUDP) {
-           
-           
             parsedPackets = [...state.arrivedPackets];
         } else {
-           
             parsedPackets = [...state.arrivedPackets].sort((a, b) => a.seq - b.seq);
         }
 
@@ -863,7 +899,6 @@ function renderLevel5() {
                 `;
                 buffer.appendChild(segEl);
 
-               
                 if (i === parsedPackets.length - 1) {
                     setTimeout(() => showFinalMessage(parsedPackets, isUDP, div), 500);
                 }
@@ -877,7 +912,6 @@ function showFinalMessage(parsedPackets, isUDP, containerDiv) {
     
     let finalString = "";
     if (isUDP) {
-       
         let finalWords = Array(state.segments.length).fill("[PERDIDO]");
         parsedPackets.forEach(p => finalWords[p.id] = p.word);
         finalString = finalWords.join(' ');
@@ -885,7 +919,6 @@ function showFinalMessage(parsedPackets, isUDP, containerDiv) {
         finalString = parsedPackets.map(s => s.word).join(' ');
     }
     
-   
     box.innerHTML = `[${escapeHTML(state.protocol)}] Mensagem Original:<br><br><b id="typewriterText"></b><span class="typewriter-cursor">|</span>`;
     box.classList.add('visible');
     
@@ -896,12 +929,9 @@ function showFinalMessage(parsedPackets, isUDP, containerDiv) {
         if (charIndex < finalString.length) {
             const char = finalString.charAt(charIndex);
             
-           
             if (char === ' ') {
-               
                 typewriterText.innerHTML += '&nbsp;';
             } else {
-               
                 typewriterText.textContent += char;
                 SoundFX.playTick();
             }
@@ -909,7 +939,6 @@ function showFinalMessage(parsedPackets, isUDP, containerDiv) {
             charIndex++;
             setTimeout(typeWriter, 40);
         } else {
-           
             SoundFX.playSuccess();
             
             if (isUDP && state.arrivedPackets.length < state.segments.length) {
@@ -929,7 +958,7 @@ function showFinalMessage(parsedPackets, isUDP, containerDiv) {
             containerDiv.appendChild(reportDiv);
             
             const restartBtn = document.createElement('button');
-            restartBtn.className = 'action-btn';
+            restartBtn.className = 'action-btn hint-pulse'; // Pulse no botão de finalizar para chamar pro replay!
             restartBtn.innerText = 'Reiniciar Jogo';
             restartBtn.style.marginTop = '20px';
             restartBtn.onclick = () => {
@@ -943,8 +972,8 @@ function showFinalMessage(parsedPackets, isUDP, containerDiv) {
         }
     }
     
-   
     setTimeout(typeWriter, 300);
 }
-
+
+// Start Game
 initGame();

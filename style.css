@@ -474,6 +474,20 @@ button:disabled {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.6; transform: scale(1.05); }
 }
+
+/* --- Animação de Tutorial (Cyber Pulse) --- */
+@keyframes pulse-hint {
+  0% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.8); }
+  70% { box-shadow: 0 0 0 15px rgba(20, 184, 166, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
+}
+
+.hint-pulse {
+  animation: pulse-hint 1.5s infinite !important;
+  border-color: var(--accent) !important;
+}
+
+
 .flying-packet {
   position: absolute;
   width: 20px;
@@ -736,6 +750,15 @@ button:disabled {
       line-height: 1.4;
       margin-top: 10px;
   }
+
+  /* Inverte a ordem: A Explicação sobe para baixo do título no Mobile! */
+  .game-container {
+      display: flex;
+      flex-direction: column;
+  }
+  header { order: 1; margin-bottom: 10px; }
+  .info-panel { order: 2; margin-bottom: 15px; } /* Painel de texto agora vem antes */
+  .level-area { order: 3; }
 }
 
 @media (max-width: 480px) {
