@@ -1,4 +1,4 @@
-// Helper for Security (Mitigate DOM-based XSS)
+
 function escapeHTML(str) {
     return str.replace(/[&<>'"]/g, 
         tag => ({
@@ -10,22 +10,20 @@ function escapeHTML(str) {
         }[tag] || tag)
     );
 }
-
-// Helper para converter string em representação Hexadecimal (Bytes)
+
 function stringToHex(str) {
     return str.split('')
               .map(char => char.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase())
               .join(' ');
 }
-
-// Game State
+
 const state = {
     level: 1,
     message: '',
-    protocol: 'HTTP/HTTPS', // App layer
-    transportProto: 'TCP', // Transport layer (TCP or UDP)
+    protocol: 'HTTP/HTTPS',
+    transportProto: 'TCP',
     words: [],
-    segments: [], // { id, word, seq: null, srcIp: null, destIp: null, lost: false }
+    segments: [],
     arrivedPackets: [],
     srcIp: '192.168.1.10',
     destIp: '203.0.113.50',
@@ -33,8 +31,7 @@ const state = {
     packetLoss: 0,
     stats: { lost: 0, retransmitted: 0 }
 };
-
-// Web Audio API Helper (Synthetic Sounds)
+
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioCtx = new AudioContext();
 
@@ -73,11 +70,11 @@ const SoundFX = {
     },
     playExplosion: () => {
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        const bufferSize = audioCtx.sampleRate * 0.4; // 300ms
+        const bufferSize = audioCtx.sampleRate * 0.4;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1; // White noise
+            data[i] = Math.random() * 2 - 1;
         }
         
         const noise = audioCtx.createBufferSource();
@@ -106,10 +103,10 @@ const SoundFX = {
         gain.connect(audioCtx.destination);
         
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
-        osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
-        osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.3); // C6
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+        osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
+        osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.3);
         
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime + 0.3);
@@ -126,7 +123,7 @@ const SoundFX = {
         gain.connect(audioCtx.destination);
         
         osc.type = 'sine';
-        // Um som mais curto e agudo para simular um "blip" na rede
+       
         osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.05);
         
@@ -137,14 +134,12 @@ const SoundFX = {
         osc.stop(audioCtx.currentTime + 0.05);
     }
 };
-
-// DOM Elements
+
 const levelArea = document.getElementById('level-area');
 const infoPanel = document.getElementById('info-panel');
 const infoTitle = document.getElementById('info-title');
 const infoText = document.getElementById('info-text');
-
-// Didactic Instructions
+
 const instructions = {
     1: {
         title: "Camada de Aplicação (A Origem)",
@@ -200,8 +195,7 @@ function loadLevel(level) {
         case 5: renderLevel5(); break;
     }
 }
-
-// --- LEVEL 1: APP START ---
+
 function renderLevel1() {
     const div = document.createElement('div');
     div.className = 'app-level';
@@ -246,12 +240,12 @@ function renderLevel1() {
     const transProtos = document.querySelectorAll('.transport-btn');
     const errorBanner = document.getElementById('validationError');
 
-    // Restore selected app protocol from state if changed previously
+   
     state.protocol = appSelect.value;
 
     appSelect.addEventListener('change', (e) => {
         state.protocol = e.target.value;
-        errorBanner.style.display = 'none'; // hide error on change
+        errorBanner.style.display = 'none';
     });
 
     input.addEventListener('input', (e) => {
@@ -268,7 +262,7 @@ function renderLevel1() {
     });
 
     input.addEventListener('keydown', (e) => {
-        // Toca o som de Tick se digitar letras/caracteres válidos
+       
         if (e.key.length === 1 || e.key === 'Backspace') {
             SoundFX.playTick();
         }
@@ -287,7 +281,7 @@ function renderLevel1() {
         errorBanner.style.display = 'none';
     }));
 
-    // Dicionário de mensagens de erro customizadas com pílulas de conhecimento avançado (CyberSec)
+   
     const mensagensErro = {
         'HTTP/HTTPS': 'A web clássica requer a garantia do TCP. (Nota avançada: O moderno protocolo HTTP/3 contorna isso usando UDP através do QUIC para maior velocidade). Mude para <b>TCP</b>.',
         
@@ -323,27 +317,27 @@ function renderLevel1() {
             `;
         }
         
-        return null; // Valid
+        return null;
     }
 
     nextBtn.addEventListener('click', () => {
         const errorMsg = validateProtocolCombination();
         if (errorMsg) {
             errorBanner.innerHTML = errorMsg;
-            errorBanner.style.display = 'flex'; // Usando flex para o layout CSS
-            // Trigger animation restart
+            errorBanner.style.display = 'flex';
+           
             errorBanner.style.animation = 'none';
-            errorBanner.offsetHeight; /* trigger reflow */
+            errorBanner.offsetHeight; 
             errorBanner.style.animation = null; 
             return;
         }
 
-        // Prepare segments
+       
         state.words = state.message.trim().split(/\s+/).filter(w => w.length > 0);
         state.segments = state.words.map((w, i) => ({
             id: i,
             word: w,
-            seq: state.transportProto === 'UDP' ? null : null, // explicit
+            seq: state.transportProto === 'UDP' ? null : null,
             srcIp: null,
             destIp: null,
             lost: false
@@ -351,8 +345,7 @@ function renderLevel1() {
         loadLevel(2);
     });
 }
-
-// --- LEVEL 2: TCP START ---
+
 function renderLevel2() {
     const isUDP = state.transportProto === 'UDP';
     const div = document.createElement('div');
@@ -393,7 +386,7 @@ function renderLevel2() {
             if (currentSeq > state.segments.length) {
                 const nextBtn2 = document.getElementById('nextBtn2');
                 nextBtn2.style.display = 'inline-block';
-                nextBtn2.focus(); // Auto-focus next button for accessibility
+                nextBtn2.focus();
             }
         }
     }
@@ -406,7 +399,7 @@ function renderLevel2() {
             
             segElement.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault(); // Prevent page scroll on space
+                    e.preventDefault();
                     stampSegment(segElement, seg, i);
                 }
             });
@@ -421,7 +414,7 @@ function renderLevel2() {
                 document.getElementById(`seq-text-${i}`).innerHTML = `Seq: ?`;
             });
             document.getElementById('nextBtn2').style.display = 'none';
-            document.getElementById('seg-0').focus(); // Return focus to first
+            document.getElementById('seg-0').focus();
         });
     }
 
@@ -429,8 +422,7 @@ function renderLevel2() {
         loadLevel(3);
     });
 }
-
-// --- LEVEL 3: IP START ---
+
 function renderLevel3() {
     const div = document.createElement('div');
     div.className = 'ip-level';
@@ -484,7 +476,7 @@ function renderLevel3() {
             errBan.innerHTML = "⚠️ Formato de IPv4 inválido.";
             errBan.style.display = 'flex';
             errBan.style.animation = 'none';
-            errBan.offsetHeight; /* trigger reflow */
+            errBan.offsetHeight; 
             errBan.style.animation = null;
             document.getElementById('nextBtn3').style.display = 'none';
             return;
@@ -520,11 +512,10 @@ function renderLevel3() {
         loadLevel(4);
     });
 }
-
-// --- LEVEL 4: INTERNET START ---
+
 function renderLevel4() {
-    state.latency = Math.floor(Math.random() * 131) + 20; // 20ms to 150ms
-    state.packetLoss = Math.floor(Math.random() * 21) + 10; // 10% to 30%
+    state.latency = Math.floor(Math.random() * 131) + 20;
+    state.packetLoss = Math.floor(Math.random() * 21) + 10;
     const isTCP = state.transportProto === 'TCP';
 
     levelArea.innerHTML = `
@@ -536,7 +527,7 @@ function renderLevel4() {
     const internetNet = document.getElementById('internetNet');
     const handshakeStatus = document.getElementById('handshake-status');
     
-    // Create router nodes
+   
     const nodes = [];
     const width = levelArea.clientWidth;
     const height = levelArea.clientHeight || 400;
@@ -554,22 +545,22 @@ function renderLevel4() {
         return node;
     }
 
-    // start node
-    createNode(50, height/2, 'A', 'success'); // 0
-    // end node
-    createNode(width - 50, height/2, 'B', 'success'); // 1
+   
+    createNode(50, height/2, 'A', 'success');
+   
+    createNode(width - 50, height/2, 'B', 'success');
 
-    // Intermediate nodes
+   
     const col1X = width * 0.33;
     const col2X = width * 0.66;
-    createNode(col1X, height * 0.25, 'R1'); // 2
-    createNode(col1X, height * 0.5, 'R2');  // 3
-    createNode(col1X, height * 0.75, 'R3'); // 4
-    createNode(col2X, height * 0.25, 'R4'); // 5
-    createNode(col2X, height * 0.5, 'R5');  // 6
-    createNode(col2X, height * 0.75, 'R6'); // 7
+    createNode(col1X, height * 0.25, 'R1');
+    createNode(col1X, height * 0.5, 'R2'); 
+    createNode(col1X, height * 0.75, 'R3');
+    createNode(col2X, height * 0.25, 'R4');
+    createNode(col2X, height * 0.5, 'R5'); 
+    createNode(col2X, height * 0.75, 'R6');
 
-    // Edges
+   
     const edges = [
         [0, 2], [0, 3], [0, 4],
         [2, 5], [2, 6], [3, 5], [3, 6], [3, 7], [4, 6], [4, 7],
@@ -593,15 +584,15 @@ function renderLevel4() {
         internetNet.appendChild(line);
 
         n1.neighbors.push(n2);
-        n2.neighbors.push(n1); // Make graph undirected for return paths (Handshake)
+        n2.neighbors.push(n1);
     });
 
     state.arrivedPackets = [];
     let expectedTotalPackets = state.segments.length;
     let handledPacketsCount = 0;
-    const transTime = Math.max(0.8, state.latency / 120); // Velocidade base
+    const transTime = Math.max(0.8, state.latency / 120);
 
-    // Lógica do Handshake TCP com Balões de Diálogo Didáticos
+   
     function performHandshake(callback) {
         handshakeStatus.innerText = "TCP: Iniciando 3-Way Handshake...";
         
@@ -689,7 +680,7 @@ function renderLevel4() {
                         SoundFX.playSuccess();
                         setTimeout(() => {
                             handshakeStatus.innerText = "";
-                            callback(); // Inicia envio dos dados
+                            callback();
                         }, 1000);
                     });
                 });
@@ -697,7 +688,7 @@ function renderLevel4() {
         }, 800);
     }
 
-    // Função principal que despacha os dados (Payload)
+   
     function startDataTransmission() {
         if (!isTCP) handshakeStatus.innerText = "UDP: Sem Handshake. Disparando dados!";
         
@@ -706,11 +697,11 @@ function renderLevel4() {
                 const willLoose = Math.random() < (state.packetLoss / 100);
                 if (willLoose) seg.lost = true;
                 schedulePacket(seg, willLoose);
-            }, i * 1500); // 1.5s stagger
+            }, i * 1500);
         });
     }
 
-    // Decide se faz handshake (TCP) ou vai direto (UDP)
+   
     if (isTCP) {
         performHandshake(startDataTransmission);
     } else {
@@ -753,10 +744,10 @@ function renderLevel4() {
                  
                  setTimeout(() => {
                      packetEl.remove();
-                     if (!isTCP) { // UDP
+                     if (!isTCP) {
                          handledPacketsCount++;
                          checkAllArrived();
-                     } else { // TCP retransmission
+                     } else {
                          state.stats.retransmitted++;
                          const retryText = document.createElement('div');
                          retryText.className = 'retransmitting-text';
@@ -767,7 +758,7 @@ function renderLevel4() {
                          
                          setTimeout(() => {
                              retryText.remove();
-                             schedulePacket(seg, false); // Tenta de novo sem perder
+                             schedulePacket(seg, false);
                          }, 1000);
                      }
                  }, 600);
@@ -795,7 +786,7 @@ function renderLevel4() {
             }, 300);
 
             currentHop++;
-            setTimeout(moveNextHop, transTime * 1000 + 200); // 200ms roteador pensando
+            setTimeout(moveNextHop, transTime * 1000 + 200);
         }
 
         packetEl.style.left = (startNode.x - 10) + 'px';
@@ -811,14 +802,13 @@ function renderLevel4() {
         }
     }
 }
-
-// --- LEVEL 5: DESTINATION START ---
+
 function renderLevel5() {
     const isUDP = state.transportProto === 'UDP';
     const div = document.createElement('div');
     div.className = 'dest-level';
     
-    // Note: arrivedPackets is likely out of order because of random timeouts
+   
     let arrivedHtml = state.arrivedPackets.map(seg => `
         <div class="segment" id="dest-seg-${seg.id}" style="border-color: var(--secondary);">
             <div class="header-tcp">Seq: ${seg.seq !== null ? seg.seq : '⛔'}</div>
@@ -844,15 +834,15 @@ function renderLevel5() {
         const buffer = document.getElementById('receiverBuffer');
         buffer.innerHTML = '';
         
-        // TCP sorts by sequence, UDP takes raw order
+       
         let parsedPackets;
         
         if (isUDP) {
-            // Reconstruct logic for UDP involves blanks for missing parts 
-            // but we process them exactly in the arrival order
+           
+           
             parsedPackets = [...state.arrivedPackets];
         } else {
-            // TCP logic: sort
+           
             parsedPackets = [...state.arrivedPackets].sort((a, b) => a.seq - b.seq);
         }
 
@@ -873,11 +863,11 @@ function renderLevel5() {
                 `;
                 buffer.appendChild(segEl);
 
-                // Show final message when all shown
+               
                 if (i === parsedPackets.length - 1) {
                     setTimeout(() => showFinalMessage(parsedPackets, isUDP, div), 500);
                 }
-            }, i * 400); // sequential animate
+            }, i * 400);
         });
     });
 }
@@ -887,7 +877,7 @@ function showFinalMessage(parsedPackets, isUDP, containerDiv) {
     
     let finalString = "";
     if (isUDP) {
-        // NÃO usamos escapeHTML aqui para não quebrar o Typewriter
+       
         let finalWords = Array(state.segments.length).fill("[PERDIDO]");
         parsedPackets.forEach(p => finalWords[p.id] = p.word);
         finalString = finalWords.join(' ');
@@ -895,7 +885,7 @@ function showFinalMessage(parsedPackets, isUDP, containerDiv) {
         finalString = parsedPackets.map(s => s.word).join(' ');
     }
     
-    // Deixamos a base pronta (O protocolo escapamos pois vai no innerHTML direto)
+   
     box.innerHTML = `[${escapeHTML(state.protocol)}] Mensagem Original:<br><br><b id="typewriterText"></b><span class="typewriter-cursor">|</span>`;
     box.classList.add('visible');
     
@@ -906,20 +896,20 @@ function showFinalMessage(parsedPackets, isUDP, containerDiv) {
         if (charIndex < finalString.length) {
             const char = finalString.charAt(charIndex);
             
-            // Render text
+           
             if (char === ' ') {
-                // Usamos innerHTML apenas para o espaço (pois &nbsp; é interpretado)
+               
                 typewriterText.innerHTML += '&nbsp;';
             } else {
-                // Usamos textContent para adicionar a letra com segurança contra XSS!
+               
                 typewriterText.textContent += char;
-                SoundFX.playTick(); // Play sound per character typed
+                SoundFX.playTick();
             }
             
             charIndex++;
-            setTimeout(typeWriter, 40); // typing speed
+            setTimeout(typeWriter, 40);
         } else {
-            // Typing finished
+           
             SoundFX.playSuccess();
             
             if (isUDP && state.arrivedPackets.length < state.segments.length) {
@@ -953,9 +943,8 @@ function showFinalMessage(parsedPackets, isUDP, containerDiv) {
         }
     }
     
-    // Initiate typewriter effect
-    setTimeout(typeWriter, 300); // 300ms delay before starting to type
+   
+    setTimeout(typeWriter, 300);
 }
-
-// Start Game
+
 initGame();
