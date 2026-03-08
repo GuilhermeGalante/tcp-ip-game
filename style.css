@@ -25,6 +25,7 @@ body {
   color: var(--text-main);
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   overflow-x: hidden;
@@ -650,6 +651,30 @@ button:disabled {
   animation: popIn 0.5s ease-out forwards;
 }
 
+/* --- Footer --- */
+.site-footer {
+    text-align: center;
+    padding: 20px 0;
+    margin-top: auto;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    width: 100%;
+    z-index: 10;
+    position: relative;
+}
+
+.site-footer a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.site-footer a:hover {
+    color: var(--secondary);
+    text-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+}
 
 @media (max-width: 1024px) {
   h1 { font-size: 2rem; margin-top: 5px; }
