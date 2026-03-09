@@ -649,7 +649,7 @@ button:disabled {
 }
 
 .hacker-report {
-  margin-top: 30px;
+  margin-top: 40px;
   background: rgba(0, 0, 0, 0.8);
   border: 1px solid var(--accent);
   border-left: 5px solid var(--accent);
@@ -664,10 +664,10 @@ button:disabled {
   animation: popIn 0.5s ease-out forwards;
 }
 
-.hacker-report {
+.site-footer {
     text-align: center;
     padding: 20px 0;
-    margin-top: auto;
+    margin-top: 50px;
     font-size: 0.9rem;
     color: var(--text-muted);
     width: 100%;
