@@ -1,4 +1,3 @@
-// Helper for Security (Mitigate DOM-based XSS)
 function escapeHTML(str) {
     return str.replace(/[&<>'"]/g, 
         tag => ({
@@ -11,21 +10,19 @@ function escapeHTML(str) {
     );
 }
 
-// Helper para converter string em representação Hexadecimal (Bytes)
 function stringToHex(str) {
     return str.split('')
               .map(char => char.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase())
               .join(' ');
 }
 
-// Game State
 const state = {
     level: 1,
     message: '',
-    protocol: 'HTTP/HTTPS', // App layer
-    transportProto: 'TCP', // Transport layer (TCP or UDP)
+    protocol: 'HTTP/HTTPS',
+    transportProto: 'TCP',
     words: [],
-    segments: [], // { id, word, seq: null, srcIp: null, destIp: null, lost: false }
+    segments: [],
     arrivedPackets: [],
     srcIp: '192.168.1.10',
     destIp: '203.0.113.50',
@@ -34,7 +31,6 @@ const state = {
     stats: { lost: 0, retransmitted: 0 }
 };
 
-// Web Audio API Helper (Synthetic Sounds)
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioCtx = new AudioContext();
 
@@ -73,11 +69,11 @@ const SoundFX = {
     },
     playExplosion: () => {
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        const bufferSize = audioCtx.sampleRate * 0.4; // 300ms
+        const bufferSize = audioCtx.sampleRate * 0.4;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1; // White noise
+            data[i] = Math.random() * 2 - 1;
         }
         
         const noise = audioCtx.createBufferSource();
@@ -106,10 +102,10 @@ const SoundFX = {
         gain.connect(audioCtx.destination);
         
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
-        osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
-        osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.3); // C6
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+        osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
+        osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.3);
         
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime + 0.3);
@@ -137,13 +133,11 @@ const SoundFX = {
     }
 };
 
-// DOM Elements
 const levelArea = document.getElementById('level-area');
 const infoPanel = document.getElementById('info-panel');
 const infoTitle = document.getElementById('info-title');
 const infoText = document.getElementById('info-text');
 
-// Didactic Instructions
 const instructions = {
     1: {
         title: "Camada de Aplicação",
@@ -200,7 +194,6 @@ function loadLevel(level) {
     }
 }
 
-// --- LEVEL 1: APP START ---
 function renderLevel1() {
     const div = document.createElement('div');
     div.className = 'app-level';
@@ -245,7 +238,6 @@ function renderLevel1() {
     const transProtos = document.querySelectorAll('.transport-btn');
     const errorBanner = document.getElementById('validationError');
 
-    // UX Tutorial: Faz o input pulsar no início
     if(state.message.trim().length === 0) {
         input.classList.add('hint-pulse');
     }
@@ -258,7 +250,7 @@ function renderLevel1() {
     });
 
     input.addEventListener('input', (e) => {
-        input.classList.remove('hint-pulse'); // Remove pulse quando começa a digitar
+        input.classList.remove('hint-pulse');
         state.message = e.target.value;
         const words = state.message.trim().split(/\s+/).filter(w => w.length > 0);
         
@@ -270,7 +262,6 @@ function renderLevel1() {
         } else {
             nextBtn.disabled = state.message.trim().length === 0;
             errorBanner.style.display = 'none';
-            // Passa o pulse para o botão se estiver validado
             if(!nextBtn.disabled) nextBtn.classList.add('hint-pulse');
             else nextBtn.classList.remove('hint-pulse');
         }
@@ -360,7 +351,6 @@ function renderLevel1() {
     });
 }
 
-// --- LEVEL 2: TCP START ---
 function renderLevel2() {
     const isUDP = state.transportProto === 'UDP';
     const div = document.createElement('div');
@@ -387,13 +377,11 @@ function renderLevel2() {
     `;
     levelArea.appendChild(div);
 
-    // UX Tutorial: Se for TCP, avisa que o usuário precisa clicar no primeiro segmento
     if (!isUDP && state.segments.length > 0) {
         const firstSeg = document.getElementById('seg-0');
         if (firstSeg) firstSeg.classList.add('hint-pulse');
     }
 
-    // UX Tutorial: Se for UDP, o botão de avançar já nasce pronto e pulsando
     if (isUDP) {
         document.getElementById('nextBtn2').classList.add('hint-pulse');
     }
@@ -404,21 +392,20 @@ function renderLevel2() {
         if (isUDP) return;
         if (!segElement.classList.contains('stamped')) {
             SoundFX.playThump();
-            segElement.classList.remove('hint-pulse'); // Remove pulse do atual
+            segElement.classList.remove('hint-pulse');
             
             segElement.classList.add('stamped');
             document.getElementById(`seq-text-${index}`).innerHTML = `Seq: ${currentSeq}`;
             seg.seq = currentSeq;
             currentSeq++;
 
-            // Passa o pulse para o próximo elemento
             const nextSeg = document.getElementById(`seg-${index + 1}`);
             if (nextSeg) nextSeg.classList.add('hint-pulse');
 
             if (currentSeq > state.segments.length) {
                 const nextBtn2 = document.getElementById('nextBtn2');
                 nextBtn2.style.display = 'inline-block';
-                nextBtn2.classList.add('hint-pulse'); // Pulse final no botão avançar
+                nextBtn2.classList.add('hint-pulse');
                 nextBtn2.focus();
             }
         }
@@ -461,7 +448,6 @@ function renderLevel2() {
     });
 }
 
-// --- LEVEL 3: IP START ---
 function renderLevel3() {
     const div = document.createElement('div');
     div.className = 'ip-level';
@@ -496,7 +482,7 @@ function renderLevel3() {
     levelArea.appendChild(div);
 
     const applyIpBtn = document.getElementById('applyIpBtn');
-    applyIpBtn.classList.add('hint-pulse'); // UX Tutorial: Pulse no botão carimbar
+    applyIpBtn.classList.add('hint-pulse');
 
     applyIpBtn.addEventListener('click', () => {
         SoundFX.playThump();
@@ -523,7 +509,7 @@ function renderLevel3() {
             return;
         }
         
-        applyIpBtn.classList.remove('hint-pulse'); // Remove pulse ao passar
+        applyIpBtn.classList.remove('hint-pulse');
 
         const errBan = document.getElementById('ipValidationErr');
         if(errBan) errBan.style.display = 'none';
@@ -540,7 +526,7 @@ function renderLevel3() {
 
         const nextBtn3 = document.getElementById('nextBtn3');
         nextBtn3.style.display = 'block';
-        nextBtn3.classList.add('hint-pulse'); // UX Tutorial: Pulse no Lançar
+        nextBtn3.classList.add('hint-pulse');
         nextBtn3.focus();
     });
 
@@ -557,7 +543,6 @@ function renderLevel3() {
     });
 }
 
-// --- LEVEL 4: INTERNET START ---
 function renderLevel4() {
     state.latency = Math.floor(Math.random() * 131) + 20;
     state.packetLoss = Math.floor(Math.random() * 21) + 10;
@@ -840,7 +825,6 @@ function renderLevel4() {
     }
 }
 
-// --- LEVEL 5: DESTINATION START ---
 function renderLevel5() {
     const isUDP = state.transportProto === 'UDP';
     const div = document.createElement('div');
@@ -869,7 +853,7 @@ function renderLevel5() {
 
     reconstructBtn.addEventListener('click', (e) => {
         e.target.style.display = 'none';
-        e.target.classList.remove('hint-pulse'); // Remove pulse ao clicar
+        e.target.classList.remove('hint-pulse');
         
         const buffer = document.getElementById('receiverBuffer');
         buffer.innerHTML = '';
@@ -958,7 +942,7 @@ function showFinalMessage(parsedPackets, isUDP, containerDiv) {
             containerDiv.appendChild(reportDiv);
             
             const restartBtn = document.createElement('button');
-            restartBtn.className = 'action-btn hint-pulse'; // Pulse no botão de finalizar para chamar pro replay!
+            restartBtn.className = 'action-btn hint-pulse';
             restartBtn.innerText = 'Reiniciar Jogo';
             restartBtn.style.marginTop = '20px';
             restartBtn.onclick = () => {
@@ -975,5 +959,4 @@ function showFinalMessage(parsedPackets, isUDP, containerDiv) {
     setTimeout(typeWriter, 300);
 }
 
-// Start Game
 initGame();

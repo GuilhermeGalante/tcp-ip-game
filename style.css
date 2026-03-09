@@ -475,7 +475,6 @@ button:disabled {
   50% { opacity: 0.6; transform: scale(1.05); }
 }
 
-/* --- Animação de Tutorial (Cyber Pulse) --- */
 @keyframes pulse-hint {
   0% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.8); }
   70% { box-shadow: 0 0 0 15px rgba(20, 184, 166, 0); }
@@ -665,8 +664,7 @@ button:disabled {
   animation: popIn 0.5s ease-out forwards;
 }
 
-/* --- Footer --- */
-.site-footer {
+.hacker-report {
     text-align: center;
     padding: 20px 0;
     margin-top: auto;
